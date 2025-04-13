@@ -6,7 +6,6 @@ import './styles.css';
 function Dashboard() {
     const username = localStorage.getItem('username');
     const email = localStorage.getItem('email');
-    const id = localStorage.getItem('id');
     const profileImage = localStorage.getItem('image');
 
     const navigate = useNavigate();

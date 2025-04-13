@@ -35,7 +35,8 @@ function Login() {
                 password: formData.password,
             });
 
-            localStorage.setItem('token', res.data.token);
+
+            localStorage.setItem('token', res.data.accessToken);
             localStorage.setItem('id', res.data.id);
             localStorage.setItem('username', res.data.username);
             localStorage.setItem('email', res.data.email);
