@@ -4,9 +4,7 @@ import axios from "axios";
 import './styles.css';
 
 function Dashboard() {
-    const username = localStorage.getItem('username');
-    const email = localStorage.getItem('email');
-    const profileImage = localStorage.getItem('image');
+    const loggedUserData = JSON.parse(localStorage.getItem('user'));
 
     const navigate = useNavigate();
 
@@ -31,8 +29,8 @@ function Dashboard() {
     
     // Check if user is authenticated
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
+        const authUser = JSON.parse(localStorage.getItem('user'));
+        if (!authUser?.token) {
             navigate('/');
         }
     }, [navigate]);
@@ -64,7 +62,20 @@ function Dashboard() {
                 setFilteredUsers(formattedUsers);
                 setLoading(false);
             } catch (err) {
-                setError(err.message || 'An error occurred while fetching data');
+                if (err.response) {
+                    const statusCode = err.response.status;
+                    if (statusCode === 404) {
+                        setError('The requested resource was not found. Please try again later.');
+                    } else if (statusCode >= 500) {
+                        setError('Server error. Please try again later.');
+                    } else {
+                        setError(`Error: ${err.response.data.message || 'An error occurred while fetching data'}`);
+                    }
+                } else if (err.request) {
+                    setError('No response from server. Please check your internet connection.');
+                } else {
+                    setError('An error occurred while setting up the request. Please try again.');
+                }
                 setLoading(false);
             }
         };
@@ -167,12 +178,12 @@ function Dashboard() {
         <div className="dashboard-wrapper">
             <header className="dashboard-header">
                 <div className="profile-section">
-                    {profileImage && (
-                        <img src={profileImage} alt={username} className="profile-image" />
+                    {loggedUserData.image && (
+                        <img src={loggedUserData.image} alt={loggedUserData.username} className="profile-image" />
                     )}
                     <div className="user-info">
-                        <h2>Welcome, {username}</h2>
-                        <p>{email}</p>
+                        <h2>Welcome, {loggedUserData.username}</h2>
+                        <p>{loggedUserData.email}</p>
                     </div>
                 </div>
                 <button className="logout-button" onClick={handleLogout}>

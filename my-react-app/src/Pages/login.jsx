@@ -8,7 +8,7 @@ function Login() {
         username: '',
         password: ''
     });
-    const [error, setError] = useState(null);
+    const [errors, setErrors] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
@@ -17,16 +17,17 @@ function Login() {
         setFormData({...formData, [name]: value});
     }
 
+
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
+        const storedUser = JSON.parse(localStorage.getItem('user'));
+        if (storedUser?.token) {
             navigate('/dashboard');
         }
     }, [navigate]);
 
     const handleSubmit = async(e) => {
         e.preventDefault();
-        setError(null);
+        setErrors(null);
         setIsLoading(true);
 
         try {
@@ -35,15 +36,30 @@ function Login() {
                 password: formData.password,
             });
 
+            const userData  = {
+                token: res.data.accessToken,
+                id: res.data.id,
+                username: res.data.username,
+                email: res.data.email,
+                image: res.data.image
+            }
+            localStorage.setItem('user',JSON.stringify(userData));
 
-            localStorage.setItem('token', res.data.accessToken);
-            localStorage.setItem('id', res.data.id);
-            localStorage.setItem('username', res.data.username);
-            localStorage.setItem('email', res.data.email);
-            localStorage.setItem('image', res.data.image);
             navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.message || "Invalid username or password");
+            if (err.response) {
+                if (err.response.status === 401) {
+                    setErrors({...errors, form: 'Invalid username or password'});
+                } else if (err.response.status === 404) {
+                    setErrors({...errors, form: 'Login service unavailable. Please try again later.'});
+                } else {
+                    setErrors({...errors, form: err.response.data?.message || 'Login failed. Please try again.'});
+                }
+            } else if (err.request) {
+                setErrors({...errors, form: 'No response from server. Please check your internet connection.'});
+            } else {
+                setErrors({...errors, form: err.message || 'An unexpected error occurred'});
+            }
         } finally {
             setIsLoading(false);
         }
@@ -56,7 +72,7 @@ function Login() {
                     <h2 className="auth-heading">Welcome Back</h2>
                     <p className="auth-subheading">Please login to your account</p>
                     
-                    {error && <div className="auth-error">{error}</div>}
+                    {errors && <div className="auth-error">{errors}</div>}
                     
                     <div className="form-group">
                         <label htmlFor="username">Username</label>
